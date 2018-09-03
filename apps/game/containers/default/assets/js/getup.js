@@ -17,9 +17,13 @@ var SCORE_INTERVAL = 10;
 var PODS_INTERVAL = 500;
 var CLOCK_INTERVAL = 100;
 
+var MOLES_ENDPOINT = '192.168.13.37';
+
 var RESET_NUMBER = 57; // it assumes the number 9 resets the pods
 
-function restart(){
+var molesStatus = new Array(5).fill('pending', 0);
+
+function restart() {
     location.reload();
 }
 
@@ -40,3 +44,42 @@ $(document).keypress(function(e) {
     console.log('Key pressed is not a number =', key);
   }
 });
+
+function MOLES() {
+
+  var successHandler = function (data) {
+    console.log('Pod down: '+ data)
+  };
+
+  var errorHandler = function (e, i) {
+    console.log('Pod error: '+ e)
+  };
+
+  this.Up = function (i, pod) {
+    // var items = e.items;
+    // var total = items ? items.length : 0;
+
+    if (pod.phase === 'running' && molesStatus[i] !== 'running') {
+      console.log('Up: ', i);
+      $.post(MOLES_ENDPOINT, { pod: i, val: 1 })
+      .done(function(data) { successHandler(data) })
+      .fail(function(e) { errorHandler(e)});
+    }
+
+    console.log('i: ', i);
+    console.log('pod: ', JSON.stringify(pod, null, 2));
+  };
+
+  this.KnockDown = function () {
+    var i;
+    for (i = 0; i <= 8; i++) {
+      console.log('Informing pod '+ i +' of shutdown');
+
+      $.post(MOLES_ENDPOINT, { pod: i, val: 0 })
+      .done(function(data) { successHandler(data) })
+      .fail(function(e) { errorHandler(e)});
+    }
+  }
+};
+
+var moles = new MOLES();

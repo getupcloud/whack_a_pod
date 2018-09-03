@@ -127,6 +127,9 @@ function handlePods(e){
 
 function handlePodsError(e){
     $(".pods").html("");
+
+    moles.KnockDown();
+
     console.log("Error getting pods:", e);
 }
 
