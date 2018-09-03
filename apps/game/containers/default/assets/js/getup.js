@@ -21,7 +21,7 @@ var MOLES_ENDPOINT = '192.168.13.37';
 
 var RESET_NUMBER = 57; // it assumes the number 9 resets the pods
 
-var molesStatus = new Array(5).fill('pending', 0);
+var molesStatus = new Array(8).fill('pending', 0);
 
 function restart() {
     location.reload();
@@ -61,6 +61,8 @@ function MOLES() {
 
     if (pod.phase === 'running' && molesStatus[i] !== 'running') {
       console.log('Up: ', i);
+      molesStatus[i] = 'running';
+
       $.post(MOLES_ENDPOINT, { pod: i, val: 1 })
       .done(function(data) { successHandler(data) })
       .fail(function(e) { errorHandler(e)});
@@ -71,11 +73,12 @@ function MOLES() {
   };
 
   this.KnockDown = function () {
-    var i;
-    for (i = 0; i <= 8; i++) {
-      console.log('Informing pod '+ i +' of shutdown');
+    molesStatus = new Array(5).fill('pending', 0);
 
-      $.post(MOLES_ENDPOINT, { pod: i, val: 0 })
+    for (var j = 0; j <= 8; j++) {
+      console.log('Informing pod '+ j +' of shutdown');
+
+      $.post(MOLES_ENDPOINT, { pod: j, val: 0 })
       .done(function(data) { successHandler(data) })
       .fail(function(e) { errorHandler(e)});
     }
