@@ -137,7 +137,7 @@ function alertYouKilledIt(){
     if (!game.IsServiceDown() && game.GetState() == "running"){
         console.log("Killed it.");
         game.SetServiceDown();
-        score.KnockDown()
+        score.KnockDown();
         $(".alert .msg").html("You knocked down the service.");
         $(".alert").show();
         setTimeout(hideAlert, 3000);
@@ -154,6 +154,7 @@ function killPod(selflink){
 }
 
 function bombClickHandler(e){
+    moles.KnockDown();
     deploymentAPI.Get(bombBlastHandler, genericError);
 }
 

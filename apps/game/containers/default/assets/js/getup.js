@@ -17,33 +17,11 @@ var SCORE_INTERVAL = 10;
 var PODS_INTERVAL = 500;
 var CLOCK_INTERVAL = 100;
 
-var MOLES_ENDPOINT = '192.168.13.37';
+var MOLES_ENDPOINT = 'http://192.168.13.37';
 
 var RESET_NUMBER = 57; // it assumes the number 9 resets the pods
 
-var molesStatus = new Array(8).fill('pending', 0);
-
-function restart() {
-    location.reload();
-}
-
-$(document).keypress(function(e) {
-  var key = e.keyCode;
-
-  // is it a number?
-  if (key >= 48 && key <= 57) {
-    if (key === RESET_NUMBER) {
-      console.log('Restarting...');
-      $("#restart").click();
-    } else {
-      var pod = key - 48;
-      console.log('Killing pod', pod);
-      $("#pod-" + pod + ' div:first').click();
-    }
-  } else {
-    console.log('Key pressed is not a number =', key);
-  }
-});
+var molesStatus = new Array(9).fill(0, 0);
 
 function MOLES() {
 
@@ -55,34 +33,69 @@ function MOLES() {
     console.log('Pod error: '+ e)
   };
 
-  this.Up = function (i, pod) {
-    // var items = e.items;
-    // var total = items ? items.length : 0;
+  this.Status = function (i, pod) {
+    var phase = pod.phase === 'running' ? 1 : 0;
 
-    if (pod.phase === 'running' && molesStatus[i] !== 'running') {
-      console.log('Up: ', i);
-      molesStatus[i] = 'running';
+    if (phase !== molesStatus[i]) { // status changed?
+      molesStatus[i] = phase;
+      console.log(phase === 1 ? 'Up:' : 'Down', i);
 
-      $.post(MOLES_ENDPOINT, { pod: i, val: 1 })
-      .done(function(data) { successHandler(data) })
-      .fail(function(e) { errorHandler(e)});
+      $.post(MOLES_ENDPOINT, { pod: i, val: phase })
+        .done(function(data) { successHandler(data) })
+        .fail(function(e) { errorHandler(e)});
     }
 
-    console.log('i: ', i);
-    console.log('pod: ', JSON.stringify(pod, null, 2));
+    console.log('pod: ', JSON.stringify({
+      position: pod.holder,
+      phase: pod.phase,
+      shortname: pod.shortname,
+      ip: pod.hostIP
+    }, null, 2));
+  };
+
+  this.CleanMoles = function () {
+    var promises = [];
+
+    for (let j = 0; j <= 8; j++) {
+      promises.push({ pod: j, val: 0 });
+    }
+
+    Promise.each(promises, function (mole) {
+      console.log('Informing pod '+ mole.pod +' of shutdown');
+      $.post(MOLES_ENDPOINT, mole)
+        .done(successHandler)
+        .fail(errorHandler);
+    })
   };
 
   this.KnockDown = function () {
-    molesStatus = new Array(5).fill('pending', 0);
-
-    for (var j = 0; j <= 8; j++) {
-      console.log('Informing pod '+ j +' of shutdown');
-
-      $.post(MOLES_ENDPOINT, { pod: j, val: 0 })
-      .done(function(data) { successHandler(data) })
-      .fail(function(e) { errorHandler(e)});
-    }
-  }
+    molesStatus = new Array(9).fill(0, 0);
+    this.CleanMoles()
+  };
 };
 
 var moles = new MOLES();
+moles.CleanMoles();
+
+function restart() {
+  moles.KnockDown();
+  setTimeout(location.reload(), 3500);
+}
+
+$(document).keypress(function(e) {
+  var key = e.charCode || e.keyCode;
+
+  // is it a number?
+  if (key >= 48 && key <= 57) {
+    if (key === RESET_NUMBER) {
+      console.log('Restarting...');
+      restart();
+    } else {
+      var pod = key - 48;
+      console.log('Killing pod', pod);
+      $("#pod-" + pod + ' div:first').click();
+    }
+  } else {
+    console.log('Key pressed is not a number =', key);
+  }
+});
