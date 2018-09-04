@@ -61,10 +61,19 @@ function MOLES() {
     }
 
     Promise.each(promises, function (mole) {
-      console.log('Informing pod '+ mole.pod +' of shutdown');
-      $.post(MOLES_ENDPOINT, mole)
-        .done(successHandler)
-        .fail(errorHandler);
+      return new Promise(function (resolve) {
+        console.log('Informing pod '+ mole.pod +' of shutdown');
+        return Promise.resolve($.post(MOLES_ENDPOINT, mole))
+          .then(function () {
+            console.log('Pod down: '+ mole.pod);
+            return resolve()
+          })
+          .catch(function (ex) {
+            console.error('Error in Pod '+ mole.pod);
+            console.error(ex);
+            return resolve();
+          })
+      })
     })
   };
 
@@ -79,7 +88,9 @@ moles.CleanMoles();
 
 function restart() {
   moles.KnockDown();
-  setTimeout(location.reload(), 3500);
+  setTimeout(function () {
+    location.reload()
+  }, 3500);
 }
 
 $(document).keypress(function(e) {
