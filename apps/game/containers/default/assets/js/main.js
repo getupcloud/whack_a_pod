@@ -29,7 +29,7 @@ sounds.SetCountdown("assets/audio/countdown.mp3",.5);
 sounds.SetStartup("assets/audio/startup.mp3",.5);
 
 document.addEventListener('DOMContentLoaded', function() {
-    $("#start-modal").show();
+    // $("#start-modal").show();
     $(".timer").html(default_duration);
     setReport("Kubernetes service not started yet.");
     deploymentAPI.Delete();

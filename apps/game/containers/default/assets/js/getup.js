@@ -40,9 +40,20 @@ function MOLES() {
       molesStatus[i] = phase;
       console.log(phase === 1 ? 'Up:' : 'Down', i);
 
-      $.post(MOLES_ENDPOINT, { pod: i, val: phase })
-        .done(function(data) { successHandler(data) })
-        .fail(function(e) { errorHandler(e)});
+      var mole = { pod: i, val: phase };
+
+      return new Promise(function (resolve) {
+        return Promise.resolve($.post(MOLES_ENDPOINT, mole))
+          .then(function () {
+            console.log('Pod up: '+ mole.pod);
+            return resolve();
+          })
+          .catch(function () {
+            console.error('Error in Pod '+ mole.pod);
+
+            molesStatus[i] = -1;
+          })
+      })
     }
 
     console.log('pod: ', JSON.stringify({
@@ -53,7 +64,27 @@ function MOLES() {
     }, null, 2));
   };
 
+  this.ActiveReset = function () {
+    var resetMole = {pod: 9, val: 1};
+    return new Promise(function (resolve) {
+      return Promise.resolve($.post(MOLES_ENDPOINT, resetMole))
+        .then(function () {
+          console.log('Reset Ok: ');
+          return resolve();
+        })
+        .catch(function () {
+          console.error('Error in Pod '+ resetMole.pod);
+          return Promise.resolve($.post(MOLES_ENDPOINT, resetMole))
+            .then(function () {
+              return resolve()
+            })
+        })
+    })
+  };
+
   this.CleanMoles = function () {
+    this.ActiveReset();
+
     var promises = [];
 
     for (let j = 0; j <= 8; j++) {
@@ -66,11 +97,10 @@ function MOLES() {
         return Promise.resolve($.post(MOLES_ENDPOINT, mole))
           .then(function () {
             console.log('Pod down: '+ mole.pod);
-            return resolve()
+            return resolve();
           })
-          .catch(function (ex) {
+          .catch(function () {
             console.error('Error in Pod '+ mole.pod);
-            console.error(ex);
             return resolve();
           })
       })
@@ -85,6 +115,7 @@ function MOLES() {
 
 var moles = new MOLES();
 moles.CleanMoles();
+moles.ActiveReset();
 
 function restart() {
   moles.KnockDown();
@@ -110,3 +141,10 @@ $(document).keypress(function(e) {
     console.log('Key pressed is not a number =', key);
   }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function () {
+    $("#deploy-start").click();
+  }, 2500);
+});
+
