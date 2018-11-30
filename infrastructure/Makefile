@@ -14,9 +14,9 @@
 BASEDIR = $(shell pwd)
 
 include ../Makefile.properties
-NODEDISKSIZE="200"
-NODECOUNT="2"
-NODETYPE="n1-standard-4"
+NODEDISKSIZE="100"
+NODECOUNT="6"
+NODETYPE="n1-standard-1"
 
 # Builds the entire infrastructure you need to run this set of demos. 
 build: env build.cluster ip
