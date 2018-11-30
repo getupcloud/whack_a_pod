@@ -74,6 +74,12 @@ Google Cloud console to activate Compute Engine service.
 1. When process finishes Browse to the the IP address value for the ingress.
 1. To get that address: `gcloud compute addresses describe #INGRESSNAME# --global`
 
+### Add Permission
+1. Access the cluster `gcloud container clusters get-credentials #ClusterName# --zone #ClusterZone# --project #Project`
+1. Give you permission to be the Master! `kubectl create clusterrolebinding cluster-admin-binding --clusterrole=cluster-admin --user=$(gcloud config get-value core/account)`
+1. Give `cluster-admin` permission to default service account on defatul NS
+1. Run `kubectl create -f rbac_default.yaml`
+
 ## Run demo
 There are two skins to the game.
 1. Carnival version:
